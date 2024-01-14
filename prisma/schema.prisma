@@ -6,43 +6,33 @@ generator client {
 }
 
 datasource db {
-    provider = "sqlite"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
-}
-
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
+    provider     = "mysql"
+    url          = env("DATABASE_URL")
+    relationMode = "prisma"
 }
 
 // Necessary for Next auth
 model Account {
-    id                String  @id @default(cuid())
-    userId            String
-    type              String
-    provider          String
-    providerAccountId String
-    refresh_token     String? // @db.Text
-    access_token      String? // @db.Text
-    expires_at        Int?
-    token_type        String?
-    scope             String?
-    id_token          String? // @db.Text
-    session_state     String?
-    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id                       String  @id @default(cuid())
+    userId                   String
+    type                     String
+    provider                 String
+    providerAccountId        String
+    refresh_token            String? @db.LongText
+    refresh_token_expires_in Int?
+    access_token             String? @db.LongText
+    expires_at               Int?
+    token_type               String?
+    scope                    String?
+    id_token                 String? @db.LongText
+    session_state            String?
+    oauth_token_secret       String?
+    oauth_token              String?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([provider, providerAccountId])
+    @@index([userId])
 }
 
 model Session {
@@ -51,6 +41,8 @@ model Session {
     userId       String
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
 }
 
 model User {
@@ -59,9 +51,15 @@ model User {
     email         String?   @unique
     emailVerified DateTime?
     image         String?
+    username      String?
+    gh_username   String?
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    projects      Project[]
+    tasks         Task[]
+    assigneeTasks Task[]    @relation(name: "assignee")
 }
 
 model VerificationToken {
@@ -70,4 +68,55 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+enum Role {
+    ADMIN
+    USER
+}
+
+model Project {
+    id      String  @id @default(cuid())
+    name    String
+    ownerId String
+    board   Board[]
+    members User[]
+}
+
+model Board {
+    id        String  @id @default(cuid())
+    name      String
+    project   Project @relation(fields: [projectId], references: [id])
+    projectId String
+    List      List[]
+
+    @@index([projectId])
+}
+
+model List {
+    id      String @id @default(cuid())
+    name    String
+    board   Board  @relation(fields: [boardId], references: [id])
+    boardId String
+
+    Task Task[]
+
+    @@index([boardId])
+}
+
+model Task {
+    id         String   @id @default(cuid())
+    name       String
+    list       List     @relation(fields: [listId], references: [id])
+    listId     String
+    assignee   User?    @relation(name: "assignee", fields: [assigneeId], references: [id])
+    assigneeId String?
+    creator    User     @relation(fields: [creatorId], references: [id])
+    creatorId  String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    @@index([listId])
+    @@index([assigneeId])
+    @@index([creatorId])
 }
