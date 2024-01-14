@@ -1,12 +1,10 @@
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import React from "react";
 import { Button } from "~/components/ui/button";
 import { api } from "~/utils/api";
 
 export default function BoardDetailPage() {
   const router = useRouter();
-  const { data: sessionData } = useSession();
+//   const { data: sessionData } = useSession();
   const projectId = router.query.projectId as string;
   const boardId = router.query.boardId as string;
   const createProject = api.list.create.useMutation();
