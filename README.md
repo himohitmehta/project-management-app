@@ -1,28 +1,42 @@
-# Create T3 App
+# Project Management App
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+Built with - NextJS, tRPC, Prisma, TailwindCSS, PlanetScale(MySQL)
 
-## What's next? How do I make an app with this?
+Features:
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- Manage Projects - Create, Update and Delete
+- Manage Tasks - Create, Update and Delete
+- User profile - Update user profile
+- Authentication - Login with Github to use the app
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Getting Started
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+Running the development server for the first time
 
-## Learn More
+```bash
+pnpm install
+pnpm dev
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+Update the .env file with the following variables
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```bash
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+DATABASE_URL='planetscale_db_connection_string'
 
-## How do I deploy this?
+NEXTAUTH_URL="http://localhost:3000"
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+AUTH_GITHUB_SECRET='github_auth_client_secret'
+AUTH_GITHUB_ID='github_auth_client_id'
+NEXTAUTH_SECRET="next_auth_secret"
+#  You can generate a new secret on the command line with:
+# openssl rand -base64 32
+# https://next-auth.js.org/configuration/options#secret
+
+
+```
+
+the app will start on [http://localhost:3000](http://localhost:3000)
+
+
+
