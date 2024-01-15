@@ -9,7 +9,7 @@ export default function ProjectDetailPage() {
   const projectId = router.query.projectId as string;
   const createProject = api.board.create.useMutation();
   const handleClick = () => {
-    const name = "First board";
+    const name = "Second board";
     createProject.mutate({ name, projectId: projectId });
   };
   const project = api.board.getLatest.useQuery();

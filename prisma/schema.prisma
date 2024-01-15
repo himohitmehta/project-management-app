@@ -88,7 +88,7 @@ model Board {
     name      String
     project   Project @relation(fields: [projectId], references: [id])
     projectId String
-    List      List[]
+    list      List[]
 
     @@index([projectId])
 }
@@ -98,8 +98,8 @@ model List {
     name    String
     board   Board  @relation(fields: [boardId], references: [id])
     boardId String
-
-    Task Task[]
+    tasks   Task[]
+    order   Int
 
     @@index([boardId])
 }
@@ -107,6 +107,7 @@ model List {
 model Task {
     id         String   @id @default(cuid())
     name       String
+    order      Int
     list       List     @relation(fields: [listId], references: [id])
     listId     String
     assignee   User?    @relation(name: "assignee", fields: [assigneeId], references: [id])
