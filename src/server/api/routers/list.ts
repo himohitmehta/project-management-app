@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { type List } from "@prisma/client";
 import { z } from "zod";
 
 import {
@@ -77,18 +76,6 @@ export const listRouter = createTRPCRouter({
       return {
         data: lists,
       };
-      // ctx.db.list.update({
-      //   where: {
-      //     id: input.listId,
-      //     boardId: input.boardId,
-      //     board: {
-      //       id: input.boardId,
-      //     },
-      //   },
-      //   data: {
-      //     order: input.order,
-      //   },
-      // });
     }),
 
   getLatest: protectedProcedure

@@ -8,6 +8,8 @@ import { type Task } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import CreateListForm from "~/components/board/create-list";
+import CreateTaskForm from "~/components/board/create-task";
 import { ListItem } from "~/components/board/list-item";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -29,27 +31,26 @@ export default function BoardDetailPage() {
   //   const { data: sessionData } = useSession();
   const projectId = router.query.projectId as string;
   const boardId = router.query.boardId as string;
-  const createProject = api.list.create.useMutation();
+  const utils = api.useUtils();
+  const createProject = api.list.create.useMutation({
+    onSuccess() {
+      void utils.list.invalidate();
+    },
+  });
   const handleCreateList = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const name = listName;
     createProject.mutate({ name, boardId: boardId });
+    setListName("");
   };
   const {
     data: boardData,
-    refetch,
-    isRefetching,
     isLoading,
-    isError,
-    isPreviousData,
-  } = api.list.getLatest.useQuery(
-    {
-      boardId: boardId,
-    },
-    {
-      queryKey: ["projects"],
-    },
-  );
+    isRefetching,
+    isFetching,
+  } = api.list.getLatest.useQuery({
+    boardId: boardId,
+  });
   console.log({ boardData });
 
   // const tasks = api.task.getLatest.useQuery();
@@ -60,8 +61,16 @@ export default function BoardDetailPage() {
     setOrderedData(boardData);
   }, [boardData]);
 
-  const updateListOrder = api.list.updateListOrder.useMutation();
-  const updateCardOrder = api.task.updateCardOrder.useMutation();
+  const updateListOrder = api.list.updateListOrder.useMutation({
+    onSuccess() {
+      void utils.list.invalidate();
+    },
+  });
+  const updateCardOrder = api.task.updateCardOrder.useMutation({
+    onSuccess() {
+      void utils.list.invalidate();
+    },
+  });
   // const updateTaskOrder =api.task.updateTaskOrder.useMutation()
   const [listName, setListName] = useState("");
   const onDragEnd = (result: any) => {
@@ -172,77 +181,94 @@ export default function BoardDetailPage() {
       }
     }
   };
-  return (
-    <div>
-      <div className="py-2">
-        <Link href="/">Home</Link>
-      </div>
-      BoardDetailPage
-      <div>projectId: {projectId}</div>
-      <div>boardId: {boardId}</div>
-      <form onSubmit={handleCreateList} className="flex  gap-2">
-        <Input
-          // className="border rounded-md "
-          value={listName}
-          onChange={(e) => setListName(e.target.value)}
-          required
-        />
-        <Button type="submit">Create List </Button>
-      </form>
-      {/* <button onClick={() => handleClick()}>Create List</button> */}
-      <div className="grid grid-cols-4 rounded-md border px-2 py-4">
-        {" "}
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="lists" type="list" direction="horizontal">
-            {(provided) => (
-              <ol
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="flex h-full gap-x-3 "
-              >
-                {orderedData
-                  ?.sort((a, b) => a.order - b.order)
-                  .map((list, index) => {
-                    return <ListItem key={list.id} index={index} data={list} />;
-                  })}
-                {provided.placeholder}
-                {/* <ListForm /> */}
-                <div className="w-1 flex-shrink-0" />
-              </ol>
-            )}
-          </Droppable>
-        </DragDropContext>
-        {/* {Array.isArray(project.data) &&
-          project.data.map((item) => {
-            return (
-              <div key={item.id} className="col-span-1 rounded-md border p-2">
-                <div className="border-b py-2">{item.name}</div>
-                <Button
-                  variant={"outline"}
-                  onClick={() => handleCreateTask(item.id)}
-                >
-                  Create Task
-                </Button>
-                {
-                  Array.isArray(tasks.data) &&
-                    tasks.data.map((task) => {
-                      if (task.listId === item.id)
-                        return (
-                          <div
-                            key={task.id}
-                            className="my-2 rounded-md border p-2"
-                          >
-                            <div>{task.name}</div>
-                          </div>
-                        );
-                    })
-                  // <div>{item.description}</div>
-                }
+  const { mutate } = api.task.create.useMutation({
+    onSuccess: () => {
+      void utils.board.getLatest.invalidate();
+    },
+  });
+  const handleCreateTask = (
+    e: React.FormEvent<HTMLFormElement>,
+    listId: string,
+  ) => {
+    e.preventDefault();
+    const name = taskName;
+    mutate({
+      name,
+      listId,
 
-              </div>
-            );
-          })} */}
+      //   creatorId: sessionData?.user?.id ?? "",
+    });
+    setTaskName("");
+  };
+  const [taskName, setTaskName] = useState("");
+
+  if (isLoading) return <div>Loading...</div>;
+
+  if (Array.isArray(boardData) && boardData.length === 0)
+    return (
+      <div className="mx-auto max-w-md rounded-md border p-4 text-center">
+        <h1 className="my-4 text-2xl font-medium ">No tasks list found</h1>
+        <CreateListForm
+          handleCreateList={handleCreateList}
+          listName={listName}
+          setListName={setListName}
+        />
       </div>
-    </div>
-  );
+    );
+  if (Array.isArray(boardData) && boardData.length > 0)
+    return (
+      <div className="mx-auto max-w-7xl">
+        {boardData.length < 4 && (
+          <CreateListForm
+            handleCreateList={handleCreateList}
+            listName={listName}
+            setListName={setListName}
+          />
+          // <form onSubmit={handleCreateList} className="flex gap-2">
+          //   <Input
+          //     // className="border rounded-md "
+          //     value={listName}
+          //     onChange={(e) => setListName(e.target.value)}
+          //     required
+          //   />
+          //   <Button type="submit">Create List </Button>
+          // </form>
+        )}
+        <div className=" my-4 grid  grid-cols-4 rounded-md border px-2 py-4">
+          {" "}
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="lists" type="list" direction="horizontal">
+              {(provided) => (
+                <ol
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="flex h-full gap-x-3 "
+                >
+                  {orderedData
+                    ?.sort((a, b) => a.order - b.order)
+                    .map((list, index) => {
+                      return (
+                        <>
+                          <ListItem
+                            key={list.id}
+                            index={index}
+                            data={list}
+                            // handleCreateTask={(e) =>
+                            //   handleCreateTask(e, list.id)
+                            // }
+                            // setTaskName={setTaskName}
+                            // taskName={taskName}
+                          />
+                        </>
+                      );
+                    })}
+                  {provided.placeholder}
+                  <div className="w-1 flex-shrink-0" />
+                </ol>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+      </div>
+    );
 }
