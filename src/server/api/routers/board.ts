@@ -19,7 +19,7 @@ export const boardRouter = createTRPCRouter({
     .input(z.object({ name: z.string().min(1), projectId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       // simulate a slow db call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // await new Promise((resolve) => setTimeout(resolve, 1000));
 
       return ctx.db.board.create({
         data: {
@@ -29,11 +29,20 @@ export const boardRouter = createTRPCRouter({
       });
     }),
 
-  getLatest: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.board.findMany({
-      // orderBy: { createdAt: "desc" },
-    });
-  }),
+  getLatest: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.string(),
+      }),
+    )
+    .query(({ ctx, input }) => {
+      return ctx.db.board.findMany({
+        where: {
+          projectId: input.projectId,
+        },
+        // orderBy: { createdAt: "desc" },
+      });
+    }),
 
   getSecretMessage: protectedProcedure.query(() => {
     return "you can now see this secret message!";
